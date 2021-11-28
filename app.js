@@ -11,7 +11,7 @@ const app = express();
 //Connect Db
 mongoose.connect('mongodb://localhost/pcat-testdb', {
   useNewUrlParser: true,
-  useUnifiedTopology: true,
+  useUnifiedTopology: true
 });
 
 //Template engine
@@ -21,7 +21,11 @@ app.use(express.static('public'));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(fileUpload());
-app.use(methodOverride('_method'));
+app.use(
+  methodOverride('_method', {
+    methods: ['POST', 'GET'],
+  })
+);
 
 //Routes
 app.get('/', async (req, res) => {
@@ -80,7 +84,15 @@ app.put('/photos/:id', async (req, res) => {
   photo.description = req.body.description;
   photo.save();
 
-  res.redirect(`/photos/${req.params.id}`)
+  res.redirect(`/photos/${req.params.id}`);
+});
+
+app.delete('/photos/:id', async (req, res) => {
+  const photo = await Photo.findOne({ _id: req.params.id });
+  let deletedImage = __dirname + '/public' + photo.image;
+  fs.unlinkSync(deletedImage);
+  await Photo.findByIdAndRemove(req.params.id);
+  res.redirect('/');
 });
 
 const port = 3000;
